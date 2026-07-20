@@ -10,6 +10,10 @@ SECTIONS
 {
     . = 0x100000;
     
+    .entry : {
+        *(.entry)
+    } :all
+
     .text : {
         *(.text*)
     } :all

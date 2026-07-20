@@ -1,7 +1,8 @@
 #include "kernel.h"
 
 void kmain(void){
+    init_gdt();
     vga_reset();
-    print("hello world\ttab\nnew line");
-    while (1) asm("hlt");
+    print("Hello world!");
+    while (1) asm volatile("hlt");
 }

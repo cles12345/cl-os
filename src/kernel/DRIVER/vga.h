@@ -8,6 +8,6 @@
 #define VGA_HEIGHT 25
 
 void print(const char* str);
-void scroll_up();
-void new_line();
-void vga_reset();
+void scroll_up(void);
+void new_line(void);
+void vga_reset(void);

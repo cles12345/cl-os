@@ -1,5 +1,5 @@
 CC = i386-elf-gcc
-CCFLAGS = -m32 -fno-stack-protector -fno-builtin -ffreestanding -nostdlib -nostdinc -Wall -Wextra -Werror -std=gnu11 -O2 -I$(KERNEL_DIR) -I$(KERNEL_DIR)/UTILL
+CCFLAGS = -m32 -fno-stack-protector -fno-builtin -ffreestanding -nostdlib -nostdinc -Wall -Wextra -Werror -std=gnu11 -O2 -g -I$(KERNEL_DIR) -I$(KERNEL_DIR)/UTILL
 ASM = nasm
 LD = i386-elf-ld
 LDFLAGS = -m elf_i386 -T linker.ld
@@ -45,7 +45,7 @@ $(BUILD_DIR)/%_s.o: $(KERNEL_DIR)/%.s
 	$(ASM) -f elf32 $< -o $@
 
 run: $(BUILD_DIR)/cl-os.iso
-	qemu-system-i386 -cdrom $< -no-reboot -no-shutdown
+	qemu-system-i386 -cdrom $<
 
 clean:
 	rm -rf $(BUILD_DIR)

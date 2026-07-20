@@ -2,7 +2,7 @@
 
 static uint8_t vga_colomn = 0;
 static uint8_t vga_row = 0;
-static uint16_t* const vga = (uint16_t* const)0xB8000;
+static volatile uint16_t* const vga = (uint16_t* const)0xB8000;
 const uint16_t default_vga_color = (VGA_COLOR8_WHITE << 8) | (VGA_COLOR8_BLACK << 12); 
 uint16_t current_vga_color = default_vga_color;
 
@@ -35,7 +35,7 @@ void print(const char* str){
     }    
 }
 
-void scroll_up(){
+void scroll_up(void){
     for (uint16_t y = 0; y < VGA_HEIGHT; y++){
         for (uint16_t x = 0; x < VGA_WIDTH; x++){
             vga[(y - 1) * VGA_WIDTH + x] = vga[y * VGA_WIDTH + x];
@@ -47,7 +47,7 @@ void scroll_up(){
     }
 }
 
-void new_line(){
+void new_line(void){
     if (vga_row < VGA_HEIGHT - 1){
         vga_colomn = 0;
         vga_row++;   
@@ -58,7 +58,7 @@ void new_line(){
     }
 }
 
-void vga_reset(){
+void vga_reset(void){
     vga_colomn = 0;
     vga_row = 0;
     current_vga_color = default_vga_color;
