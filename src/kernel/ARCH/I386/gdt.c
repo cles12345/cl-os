@@ -1,21 +1,25 @@
 #include "gdt.h"
 
-extern void gdt_flush(gdtr* pgdt);
+extern void gdt_flush(gdtr_t* pgdt);
+extern void tss_flush(void);
+extern uint32_t stack_space;
 
-static gdt_entry gdt_entries[5];
-static gdtr pgdt;
+static gdt_entry_t gdt_entries[6];
+static gdtr_t gdtr;
 
 void init_gdt(void){
-    pgdt.limit = (sizeof(gdt_entry) * 5) - 1;
-    pgdt.base = (uint32_t)gdt_entries;
+    gdtr.limit = (sizeof(gdt_entry_t) * 6) - 1;
+    gdtr.base = (uint32_t)gdt_entries;
 
     set_gdt_entry(0, 0, 0, 0, 0); // null segment
     set_gdt_entry(1, 0, 0xFFFFFFFF, 0x9A, 0xCF); // kernel code segment
     set_gdt_entry(2, 0, 0xFFFFFFFF, 0x92, 0xCF); // kernel data segment
     set_gdt_entry(3, 0, 0xFFFFFFFF, 0xFA, 0xCF); // user code segment
     set_gdt_entry(4, 0, 0xFFFFFFFF, 0xF2, 0xCF); // user data segment
+    write_tss(5, 0x10, (uint32_t)&stack_space);
 
-    gdt_flush(&pgdt);
+    gdt_flush(&gdtr);
+    tss_flush();
 }
 
 void set_gdt_entry(uint32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran){

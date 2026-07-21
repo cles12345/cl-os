@@ -7,6 +7,7 @@ section .entry
     dd -(0x1BADB002 + 0x00000000)
 
 global start
+global stack_space
 extern kmain
 start:
     cli 
