@@ -1,4 +1,6 @@
 #include "utill.h"
+#include "syscall.h"
+#include "DRIVER/keyboard.h"
 
 const char* exception_names[32] = {
     "Divide Error",               
@@ -31,7 +33,15 @@ void isr_handler(intrupt_registers_t* regs){
     if (regs->intrupt_number < 32){
         print("Exception: ");
         print(exception_names[regs->intrupt_number]);
+        print("\nError code: ");
+        printh(regs->error_code);
         print("\n");
         kernel_panic();
+    }
+    else if (regs->intrupt_number == 0x80){
+        syscall_dispatcher(regs);
+    }
+    else if(regs->intrupt_number == 33){
+        keyboard_handler();
     }
 }

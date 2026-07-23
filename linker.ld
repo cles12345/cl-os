@@ -1,35 +1,40 @@
 OUTPUT_FORMAT(elf32-i386)
-ENTRY(start)
-
-PHDRS
-{
-    all PT_LOAD FLAGS(0x7);
-}
+ENTRY(_start)
 
 SECTIONS
 {
     . = 0x100000;
+
+    .multiboot ALIGN(4K): {
+        *(.multiboot)
+    }
     
-    .entry : {
-        *(.entry)
-    } :all
+    .note.gnu.build-id ALIGN(4K): {
+        *(note.gnu.build-id)
+    }
+    
+    .boot ALIGN(4K): {
+        *(.boot)
+    }
 
-    .text : {
-        *(.text*)
-    } :all
+    . += 0xC0000000;
 
-    .rodata : {
-        *(.rodata*)
-    } :all
+    .text ALIGN(4K): AT(ADDR(.text) - 0xC0000000) {
+        *(.text)
+    }
 
-    .data : {
-        *(.data*)
-    } :all
+    .rodata ALIGN(4K): AT(ADDR(.rodata) - 0xC0000000) {
+        *(.rodata)
+    }
 
-    .bss : {
-        *(.bss*)
+    .data ALIGN(4K): AT(ADDR(.data) - 0xC0000000) {
+        *(.data)
+    }
+
+    .bss ALIGN(4K): AT(ADDR(.bss) - 0xC0000000) {
         *(COMMON)
-    } :all
+        *(.bss)
+    }
 
     __end = .;
 }

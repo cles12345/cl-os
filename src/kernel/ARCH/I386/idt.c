@@ -38,6 +38,10 @@ extern void isr29(void);
 extern void isr30(void);
 extern void isr31(void);
 
+extern void isr33(void);
+
+extern void isr128(void);
+
 void init_idt(void){
     idtr.limit = (sizeof(idt_entry_t) * 256) - 1;
     idtr.base = (uint32_t)idt_entries;
@@ -56,8 +60,8 @@ void init_idt(void){
     outb(0x21, 0x01);
     outb(0xA1, 0x01);
 
-    outb(0x21, 0);
-    outb(0xA1, 0);
+    outb(0x21, 0xFF);
+    outb(0xA1, 0xFF); 
 
     set_id_gate(0, (uint32_t)isr0, 0x08, 0x8E);
     set_id_gate(1, (uint32_t)isr1, 0x08, 0x8E);
@@ -91,7 +95,15 @@ void init_idt(void){
     set_id_gate(29, (uint32_t)isr29, 0x08, 0x8E);
     set_id_gate(30, (uint32_t)isr30, 0x08, 0x8E);
     set_id_gate(31, (uint32_t)isr31, 0x08, 0x8E);
+
+    set_id_gate(33, (uint32_t)isr33, 0x08, 0x8E);
+    
+    set_id_gate(0x80, (uint32_t)isr128, 0x08, 0x8E);
+
     idt_flush((uint32_t)&idtr);
+
+    outb(0x21, inb(0x21) & ~0x02);
+    asm volatile("sti");
 }
 
 void set_id_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags){

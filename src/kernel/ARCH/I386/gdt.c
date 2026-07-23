@@ -2,7 +2,7 @@
 
 extern void gdt_flush(gdtr_t* pgdt);
 extern void tss_flush(void);
-extern uint32_t stack_space;
+extern uint32_t stack_top;
 
 static gdt_entry_t gdt_entries[6];
 static gdtr_t gdtr;
@@ -16,7 +16,7 @@ void init_gdt(void){
     set_gdt_entry(2, 0, 0xFFFFFFFF, 0x92, 0xCF); // kernel data segment
     set_gdt_entry(3, 0, 0xFFFFFFFF, 0xFA, 0xCF); // user code segment
     set_gdt_entry(4, 0, 0xFFFFFFFF, 0xF2, 0xCF); // user data segment
-    write_tss(5, 0x10, (uint32_t)&stack_space);
+    write_tss(5, 0x10, (uint32_t)&stack_top);
 
     gdt_flush(&gdtr);
     tss_flush();
