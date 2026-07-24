@@ -19,8 +19,8 @@ OBJS = $(C_OBJS) $(ASM_OBJS) $(S_OBJS)
 .PHONY: all run clean
 
 all: $(BUILD_DIR)/cl-os.iso
-
-$(BUILD_DIR)/cl-os.iso: $(BUILD_DIR)/kernel
+ 
+$(BUILD_DIR)/cl-os.iso: $(BUILD_DIR)/kernel $(BUILD_DIR)/boot/elf
 	rm -f $(BUILD_DIR)/cl-os.iso 2>/dev/null || true
 	@mkdir -p $(BUILD_DIR)/boot
 	@mkdir -p $(BUILD_DIR)/boot/grub
@@ -43,6 +43,12 @@ $(BUILD_DIR)/%_asm.o: $(KERNEL_DIR)/%.asm
 $(BUILD_DIR)/%_s.o: $(KERNEL_DIR)/%.s
 	@mkdir -p $(dir $@)
 	$(ASM) -f elf32 $< -o $@
+
+$(BUILD_DIR)/boot/elf: elf.s
+	@mkdir -p $(BUILD_DIR)/boot
+	$(ASM) -f elf32 $< -o elf.o
+	$(LD) -m elf_i386 -o $@ elf.o
+	rm -rf elf.o
 
 run: $(BUILD_DIR)/cl-os.iso
 	qemu-system-i386 -cdrom $<

@@ -1,5 +1,7 @@
 #include "kernel.h"
 
+extern void jump_to_user_mode(uint32_t, uint32_t);
+
 void kmain(uint32_t magic, multiboot_info_t* boot_info){\
     vga_reset();
     enable_cursor(0x0C, 0x0F);
@@ -32,15 +34,35 @@ void kmain(uint32_t magic, multiboot_info_t* boot_info){\
     }
     init_memory(mem_high, physical_alloc_start);
     kmalloc_init();
-    int *foo = kmalloc(sizeof(char) * 12);
-    *foo = 5;
-    print("value: ");
-    printi(*foo);
-    print("\naddr: ");
-    printh((uint32_t)foo);
-    print("\n");
-    asm volatile("int $0x80");
-    print("\n");
-    kfree(foo);
+    uint32_t boot_info_page = (uint32_t)boot_info & ~0xFFF;
+    mem_map_page(boot_info_page, boot_info_page, PAGE_FLAG_PRESENT | PAGE_FLAG_WRITE);
+    if (boot_info->mods_count > 0){
+        uint32_t mod_start = *(uint32_t*)(boot_info->mods_addr);
+        uint32_t mod_end = *(uint32_t*)(boot_info->mods_addr + 4);
+        uint32_t elf_size = mod_end - mod_start;
+        
+        uint32_t elf_virt = mod_start + KERNEL_START;
+        uint32_t num_pages = CEIL_DIV(elf_size, 0x1000);
+        for (uint32_t i = 0; i < num_pages; i++){
+            mem_map_page(elf_virt + i * 0x1000, mod_start + i * 0x1000, PAGE_FLAG_PRESENT | PAGE_FLAG_WRITE);
+        }
+        
+        uint8_t* elf_data = (uint8_t*)elf_virt;
+
+        uint32_t* new_pd = vmm_new_page_dir();
+        uint32_t entry_point;
+        
+        if (elf_load(elf_data, &entry_point, new_pd) == 0){
+            for (uint32_t i = 0; i < num_pages; i++){
+                mem_unmap_page(elf_virt + i * 0x1000);
+            }
+            mem_change_page_dir(new_pd);
+            jump_to_user_mode(entry_point, STACK_ELF_START);
+        }
+        else{
+            print("couldnt start the ELF\n");
+            kernel_panic();
+        }
+    }
     while (1) asm volatile("hlt");
 }

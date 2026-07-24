@@ -6,3 +6,4 @@
 #include "multiboot.h"
 #include "MM/memory.h"
 #include "MM/heap.h"
+#include "elf.h"

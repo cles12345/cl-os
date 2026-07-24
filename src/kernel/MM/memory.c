@@ -86,7 +86,7 @@ void sync_page_dirs(void){
         if(page_dirs_used[i]){
             uint32_t* page_dir = page_dirs[i];
 
-            for (int x = 786; x < 1024; x++){
+            for (int x = 768; x < 1024; x++){
                 page_dir[x] = initial_page_dir[x] & ~PAGE_FLAG_OWNER;
             }
         }
@@ -205,6 +205,9 @@ uint32_t* vmm_new_page_dir(void){
             }
             
             sync_page_dirs();
+            
+            uint32_t phys = (uint32_t)pd - KERNEL_START;
+            pd[1023] = phys | PAGE_FLAG_PRESENT | PAGE_FLAG_WRITE;
 
             return pd;
         }
@@ -247,4 +250,8 @@ void vmm_free_page_dir(uint32_t* pd){
             return;
         }
     }
+}
+
+void mem_change_page_dir_to_intial(void){
+    mem_change_page_dir(initial_page_dir);
 }
