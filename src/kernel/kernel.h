@@ -3,6 +3,7 @@
 #include "ARCH/I386/idt.h"
 #include "DRIVER/vga.h"
 #include "DRIVER/cursor.h"
+#include "DRIVER/disk.h"
 #include "multiboot.h"
 #include "MM/memory.h"
 #include "MM/heap.h"

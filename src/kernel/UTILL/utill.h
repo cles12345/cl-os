@@ -8,6 +8,9 @@ void *memset(void* dest, char val, uint32_t count);
 void kernel_panic(void);
 void outb(uint16_t port, uint8_t value);
 uint8_t inb(uint16_t port);
+void outw(uint16_t port, uint16_t value);
+uint16_t inw(uint16_t port);
+void io_wait(void);
 void *memcpy(void *restrict dest, void *restrict src, uint32_t count);
 
 typedef struct{

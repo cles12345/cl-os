@@ -51,7 +51,7 @@ $(BUILD_DIR)/boot/elf: elf.s
 	rm -rf elf.o
 
 run: $(BUILD_DIR)/cl-os.iso
-	qemu-system-i386 -cdrom $<
+	qemu-system-i386 -hda $<
 
 clean:
 	rm -rf $(BUILD_DIR)

@@ -34,6 +34,29 @@ void kmain(uint32_t magic, multiboot_info_t* boot_info){\
     }
     init_memory(mem_high, physical_alloc_start);
     kmalloc_init();
+    uint8_t* buffer = kmalloc(512);
+    read_sectors(0, 1, buffer);
+    if (buffer[511] != 0xAA){
+        print("Failed to read from disk\n");
+        kernel_panic();
+    }
+    print("MBR signature: ");
+    printh(buffer[510]);
+    print(", ");
+    printh(buffer[511]);
+    print("\n");
+    memset(buffer, 0, 512);
+    write_sectors(0, 1, buffer);
+    if (buffer[511] != 0){
+        print("Failed to write to the disk");
+        kernel_panic();
+    }
+    print("MBR signature after writing 0: ");
+    printh(buffer[510]);
+    print(", ");
+    printh(buffer[511]);
+    print("\n");
+    kfree(buffer);
     uint32_t boot_info_page = (uint32_t)boot_info & ~0xFFF;
     mem_map_page(boot_info_page, boot_info_page, PAGE_FLAG_PRESENT | PAGE_FLAG_WRITE);
     if (boot_info->mods_count > 0){
