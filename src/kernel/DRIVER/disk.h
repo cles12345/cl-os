@@ -10,5 +10,5 @@
 #define ATA_DRIVE_PORT 0x1F6
 #define ATA_STATUS_PORT 0x1F7
 
-void read_sectors(uint32_t lba, uint32_t sector_count, uint8_t* buffer);
-void write_sectors(uint32_t lba, uint32_t sector_count, uint8_t* buffer);
+void read_sectors(uint32_t lba, uint32_t sector_count, void* buffer);
+void write_sectors(uint32_t lba, uint32_t sector_count, void* buffer);

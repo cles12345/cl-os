@@ -4,6 +4,7 @@
 #include "DRIVER/vga.h"
 #include "DRIVER/cursor.h"
 #include "DRIVER/disk.h"
+#include"DRIVER/fat.h"
 #include "multiboot.h"
 #include "MM/memory.h"
 #include "MM/heap.h"

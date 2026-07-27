@@ -12,6 +12,7 @@ void outw(uint16_t port, uint16_t value);
 uint16_t inw(uint16_t port);
 void io_wait(void);
 void *memcpy(void *restrict dest, void *restrict src, uint32_t count);
+bool memcmp(const void* a, const void* b, uint16_t count);
 
 typedef struct{
     uint32_t cr2;

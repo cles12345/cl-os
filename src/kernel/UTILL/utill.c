@@ -51,3 +51,17 @@ void *memcpy(void *restrict dest, void *restrict src, uint32_t count){
 
     return d;
 }
+
+bool memcmp(const void* a, const void* b, uint16_t count){
+    const uint8_t* tempa = (const uint8_t*)a;
+    const uint8_t* tempb = (const uint8_t*)b;
+
+    for (uint32_t i = 0; i < count; i++){
+        if (*tempa != *tempb){
+            return false;
+        }
+        tempa++;
+        tempb++;
+    }
+    return true;
+}

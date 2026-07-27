@@ -120,7 +120,7 @@ void mem_map_page(uint32_t virt_addr, uint32_t phy_addr, uint32_t flags){
             pt[i] = 0;
         }    
     }
-    pt[pt_index] = phy_addr | pde_flags;
+    pt[pt_index] = (phy_addr & PAGE_FLAG_FRAME) | pde_flags;
     mem_num_vpages++;
     invalidate(virt_addr);
 

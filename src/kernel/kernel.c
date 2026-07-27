@@ -1,8 +1,10 @@
 #include "kernel.h"
 
 extern void jump_to_user_mode(uint32_t, uint32_t);
+extern uint32_t kernel_start;
+extern uint32_t kernel_end;
 
-void kmain(uint32_t magic, multiboot_info_t* boot_info){\
+void kmain(uint32_t magic, multiboot_info_t* boot_info){
     vga_reset();
     enable_cursor(0x0C, 0x0F);
     if (magic != 0x2BADB002){
@@ -11,81 +13,42 @@ void kmain(uint32_t magic, multiboot_info_t* boot_info){\
     }
     init_gdt();
     init_idt();
+    uint32_t kernel_end_phys = (uint32_t)&kernel_end - KERNEL_START;
+    uint32_t physical_alloc_start = (kernel_end_phys + 0x1000) & ~0xFFF;
     uint32_t mem_high = 0;
-    uint32_t physical_alloc_start = 0x00100000;  
     if (boot_info->flags & (1 << 6)){
         multiboot_mmap_entry_t* mmap = (multiboot_mmap_entry_t*)boot_info->mmap_addr;
         multiboot_mmap_entry_t* end = (multiboot_mmap_entry_t*)(boot_info->mmap_addr + boot_info->mmap_length);
         
         while (mmap < end){
             if (mmap->type == MULTIBOOT_MEMORY_AVAILABLE){
-                uint32_t start = mmap->addr_low;
-                uint32_t length = mmap->len_low;
-                uint32_t end_addr = start + length;
-                
+                uint32_t end_addr = mmap->addr_low + mmap->len_low;
                 if (end_addr > mem_high) mem_high = end_addr;
-                
-                if (start >= 0x00100000 && start < physical_alloc_start){
-                    physical_alloc_start = start;
-                }
             }
             mmap = (multiboot_mmap_entry_t*)((uint32_t)mmap + mmap->size + 4);
         }
     }
+    if (mem_high == 0){
+        mem_high = 0x10000000; 
+    }
     init_memory(mem_high, physical_alloc_start);
     kmalloc_init();
-    uint8_t* buffer = kmalloc(512);
-    read_sectors(0, 1, buffer);
-    if (buffer[511] != 0xAA){
-        print("Failed to read from disk\n");
-        kernel_panic();
-    }
-    print("MBR signature: ");
-    printh(buffer[510]);
-    print(", ");
-    printh(buffer[511]);
-    print("\n");
-    memset(buffer, 0, 512);
-    write_sectors(0, 1, buffer);
-    if (buffer[511] != 0){
-        print("Failed to write to the disk");
-        kernel_panic();
-    }
-    print("MBR signature after writing 0: ");
-    printh(buffer[510]);
-    print(", ");
-    printh(buffer[511]);
-    print("\n");
-    kfree(buffer);
-    uint32_t boot_info_page = (uint32_t)boot_info & ~0xFFF;
-    mem_map_page(boot_info_page, boot_info_page, PAGE_FLAG_PRESENT | PAGE_FLAG_WRITE);
-    if (boot_info->mods_count > 0){
-        uint32_t mod_start = *(uint32_t*)(boot_info->mods_addr);
-        uint32_t mod_end = *(uint32_t*)(boot_info->mods_addr + 4);
-        uint32_t elf_size = mod_end - mod_start;
-        
-        uint32_t elf_virt = mod_start + KERNEL_START;
-        uint32_t num_pages = CEIL_DIV(elf_size, 0x1000);
-        for (uint32_t i = 0; i < num_pages; i++){
-            mem_map_page(elf_virt + i * 0x1000, mod_start + i * 0x1000, PAGE_FLAG_PRESENT | PAGE_FLAG_WRITE);
-        }
-        
-        uint8_t* elf_data = (uint8_t*)elf_virt;
+    init_fat32();
+    uint8_t *elf_file = kmalloc(sizeof_file("ELF        "));
+    read_file("ELF        ", elf_file);
+    
+    uint32_t* new_pd = vmm_new_page_dir();
+    uint32_t entry_point;
 
-        uint32_t* new_pd = vmm_new_page_dir();
-        uint32_t entry_point;
-        
-        if (elf_load(elf_data, &entry_point, new_pd) == 0){
-            for (uint32_t i = 0; i < num_pages; i++){
-                mem_unmap_page(elf_virt + i * 0x1000);
-            }
-            mem_change_page_dir(new_pd);
-            jump_to_user_mode(entry_point, STACK_ELF_START);
-        }
-        else{
-            print("couldnt start the ELF\n");
-            kernel_panic();
-        }
+    if (elf_load(elf_file, &entry_point, new_pd) == 0){
+        kfree(elf_file);
+        mem_change_page_dir(new_pd);
+        jump_to_user_mode(entry_point, STACK_ELF_START);
+    }
+    else{
+        print("couldnt start the ELF\n");
+        kfree(elf_file);
+        kernel_panic();
     }
     while (1) asm volatile("hlt");
 }

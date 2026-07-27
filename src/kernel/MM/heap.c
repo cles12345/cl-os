@@ -35,7 +35,7 @@ void change_heap_size(int new_heap_size){
                 kernel_panic();
             }
             
-            mem_map_page(KERNEL_MALLOC + old_page_top * 0x1000 + i * 0x1000, phys, PAGE_FLAG_WRITE | PAGE_FLAG_PRESENT | PAGE_FLAG_OWNER);
+            mem_map_page(KERNEL_MALLOC + (old_page_top + i) * 0x1000, phys, PAGE_FLAG_PRESENT | PAGE_FLAG_WRITE | PAGE_FLAG_OWNER);
         }
     }
     
@@ -55,7 +55,7 @@ void *kmalloc(uint32_t size){
         if (!current->used && current->size >= size){
             uint32_t remaning = current->size - size;
 
-            if (remaning > sizeof(heap_block_t) + 5) {
+            if (remaning >= sizeof(heap_block_t) + 8) {
                 heap_block_t* new_block = (heap_block_t*)((uint32_t)current + sizeof(heap_block_t) + size);
 
                 new_block->magic = HEAP_MAGIC;
@@ -77,31 +77,63 @@ void *kmalloc(uint32_t size){
         }
         
         prev = current;
-        current = prev->next;
+        current = current->next;
     }
 
     uint32_t total_needed = size + sizeof(heap_block_t);
-    uint32_t total_chunks = CEIL_DIV(total_needed, HEAP_THRESHOLD);
-    uint32_t current_chunks = CEIL_DIV(heap_size, HEAP_THRESHOLD);
-    uint32_t chunks_needed = total_chunks - current_chunks;  
-
-    uint32_t old_heap_size = heap_size;
-    if (chunks_needed > 0){
-        uint32_t expand_size = chunks_needed * HEAP_THRESHOLD;
-        change_heap_size(heap_size + expand_size);
+    if (prev && !prev->used) {
+        if (total_needed > prev->size) {
+            total_needed -= prev->size;
+        } else {
+            total_needed = 0;
+        }
     }
+    uint32_t expand_size = CEIL_DIV(total_needed, HEAP_THRESHOLD) * HEAP_THRESHOLD;
+    if (expand_size == 0) expand_size = HEAP_THRESHOLD;
+    
+    uint32_t old_heap_size = heap_size;
+    change_heap_size(old_heap_size + expand_size);
 
     heap_block_t* new_block = (heap_block_t*)(heap_start + old_heap_size);
     new_block->magic = HEAP_MAGIC;
-    new_block->size = size;
-    new_block->used = true;
+    new_block->size = heap_size - old_heap_size - sizeof(heap_block_t);
+    new_block->used = false;
     new_block->next = 0;
     new_block->prev = prev;
 
-    if (prev){
-        prev->next = new_block;
+    if (prev) {
+    prev->next = new_block;
+    } 
+    else {
+        heap_head = new_block;
     }
 
+    if (prev && !prev->used) {
+        prev->size += sizeof(heap_block_t) + new_block->size;
+        prev->next = new_block->next;
+        if (prev->next) prev->next->prev = prev;
+        new_block = prev;
+    }
+
+    uint32_t remaining = new_block->size - size;
+    if (remaining >= sizeof(heap_block_t) + 8){
+        heap_block_t* split_block = (heap_block_t*)((uint32_t)new_block + sizeof(heap_block_t) + size);
+        split_block->magic = HEAP_MAGIC;
+        split_block->size = remaining - sizeof(heap_block_t);
+        split_block->used = false;
+
+        split_block->next = new_block->next;
+        split_block->prev = new_block;
+
+        if (split_block->next){
+            split_block->next->prev = split_block;
+        }
+
+        new_block->size = size;
+        new_block->next = split_block;
+    }
+
+    new_block->used = true;
     return (void*)(new_block + 1);
 }
 
@@ -117,7 +149,7 @@ void kfree(void* ptr){
     }
 
     heap_block_t* block = (heap_block_t*)ptr - 1;
-    
+
     if (block->magic != HEAP_MAGIC){
         print("kfree error: a block magic is not equal 0xDEADBEEF\n");
         return;
