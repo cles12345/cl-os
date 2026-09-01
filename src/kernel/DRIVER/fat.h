@@ -54,5 +54,12 @@ typedef struct {
 } __attribute__((packed)) DIR_ENTRY_T;
 
 void init_fat32(void);
-void read_file(const char* name, uint8_t* buffer);
-uint32_t sizeof_file(const char* name);
+
+uint32_t fat32_read_file(const char* path, uint8_t* buffer);
+uint32_t fat32_write_file(const char* path, const uint8_t* buffer, uint32_t size);
+uint32_t fat32_file_size(const char* path);
+bool fat32_file_exists(const char* path);
+
+bool fat32_create_directory(const char* path);
+bool fat32_list_directory(const char* path);
+bool fat32_delete(const char* path);

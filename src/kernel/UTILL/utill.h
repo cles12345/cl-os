@@ -11,8 +11,14 @@ uint8_t inb(uint16_t port);
 void outw(uint16_t port, uint16_t value);
 uint16_t inw(uint16_t port);
 void io_wait(void);
-void *memcpy(void *restrict dest, void *restrict src, uint32_t count);
+void *memcpy(void *dest, void *src, uint32_t count);
 bool memcmp(const void* a, const void* b, uint16_t count);
+int strlen(const char* str);
+char* strcpy(char* dest, const char* src);
+char* strrchr(const char* str, char c);
+char* strtok(char* str, const char* delim);
+char* strchr(const char* str, char c);
+bool strcmp(const char* str1, const char* str2);
 
 typedef struct{
     uint32_t cr2;

@@ -58,12 +58,12 @@ void keyboard_handler(void){
     }
 
     if (scancode == KEY_SPACE){
-        print(" ");
+        printc(' ');
         return;
     }
     
     if (scancode == KEY_ENTER){
-        print("\n");
+        printc('\n');
         return;
     }
     
@@ -73,25 +73,19 @@ void keyboard_handler(void){
     }
 
     if (scancode == KEY_TAB){
-        print("\t");
+        printc('\t');
         return;
     }
 
     if (shift_pressed || caps_lock){
         if (upper_case_scancode[scancode]){
-            char str[2];
-            str[0] = upper_case_scancode[scancode];
-            str[1] = '\0';
-            print(str);
+            printc(upper_case_scancode[scancode]);
         }
         return;
     }
     else{
         if (lower_case_scancode[scancode]){
-            char str[2];
-            str[0] = lower_case_scancode[scancode];
-            str[1] = '\0';
-            print(str);
+            printc(lower_case_scancode[scancode]);
         }
         return;
     }    

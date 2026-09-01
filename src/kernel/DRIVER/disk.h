@@ -9,6 +9,16 @@
 #define ATA_LBA_HIGH_PORT 0x1F5
 #define ATA_DRIVE_PORT 0x1F6
 #define ATA_STATUS_PORT 0x1F7
+#define ATA_COMMAND_PORT 0x1F7
+
+#define ATA_SR_BSY 0x80
+#define ATA_SR_DRDY 0x20
+#define ATA_SR_DRQ 0x08
+#define ATA_SR_ERR 0x01
+
+#define ATA_CMD_READ_PIO        0x20
+#define ATA_CMD_WRITE_PIO       0x30
+#define ATA_CMD_CACHE_FLUSH     0xE7
 
 void read_sectors(uint32_t lba, uint32_t sector_count, void* buffer);
 void write_sectors(uint32_t lba, uint32_t sector_count, void* buffer);

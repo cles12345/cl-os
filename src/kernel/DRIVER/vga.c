@@ -8,30 +8,34 @@ uint16_t current_vga_color = default_vga_color;
 
 void print(const char* str){
     while (*str){
-        switch (*str){
-        case '\n': 
-            new_line();
-            break;
-        case '\r': 
-            vga_colomn = 0;
-            break;
-        case '\t':
-            for (uint8_t i = 0; i < 4; i++){
-                if (vga_colomn == VGA_WIDTH){
-                    new_line();
-                }
-                vga_colomn++;
-            }
-            break;
-        default:
+        printc(*str);
+        str++;
+    }
+}
+
+void printc(char c){
+    switch (c){
+    case '\n': 
+        new_line();
+        break;
+    case '\r': 
+        vga_colomn = 0;
+        break;
+    case '\t':
+        for (uint8_t i = 0; i < 4; i++){
             if (vga_colomn == VGA_WIDTH){
                 new_line();
             }
-            
-            vga[vga_row * VGA_WIDTH + (vga_colomn++)] = *str | current_vga_color;
-            break;
+            vga_colomn++;
         }
-        str++;
+        break;
+    default:
+        if (vga_colomn == VGA_WIDTH){
+            new_line();
+        }
+        
+        vga[vga_row * VGA_WIDTH + (vga_colomn++)] = c | current_vga_color;
+        break;
     }
 
     update_cursor(vga_colomn, vga_row);
@@ -80,10 +84,7 @@ void printh(uint32_t num){
     }
     
     while (i > 0){
-        char c[2];
-        c[0] = buffer[--i];
-        c[1] = '\0';
-        print(c);
+        print(buffer[--i]);
     }
 }
 
