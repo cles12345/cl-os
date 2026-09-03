@@ -33,51 +33,20 @@ void kmain(uint32_t magic, multiboot_info_t* boot_info){
     }
     init_memory(mem_high, physical_alloc_start);
     kmalloc_init();
-    init_fat32();
-    if (!fat32_file_exists("test")) {
-        if (!fat32_create_directory("test")) {
-            print("Failed to create directory\n");
-            kernel_panic();
-        }
-    }
+    init_ext3();
     
-    const char *file_content = "made by abdelrahman\n";
-    if (fat32_write_file("/test/t", (const uint8_t*)file_content, strlen(file_content)) == 0) {
-        print("Failed to write file\n");
-        kernel_panic();
-    }
-
-    fat32_list_directory("/test");
-    
-    if (!fat32_file_exists("/test/t")) {
-        print("test file not found\n");
-        kernel_panic();
-    }
-    uint32_t t_size = fat32_file_size("/test/t"); 
-    char *t_buffer = kmalloc(t_size);
-
-    uint32_t t_bytes_read = fat32_read_file("/test/t", (uint8_t*)t_buffer);
-    if (t_bytes_read != t_size) {
-        print("Failed to read full file.\n");
-        kfree(t_buffer);
-        kernel_panic();
-    }
-    print(t_buffer);
-
-    kfree(t_buffer);
-
-    if (!fat32_file_exists("/elf")) {
+    if (!ext3_file_exists("/elf")) {
         print("ELF file not found\n");
         kernel_panic();
     }
-    uint32_t file_size = fat32_file_size("/elf");
+    uint32_t file_size = ext3_file_size("/elf");
 
     uint8_t *elf_file = kmalloc(file_size);
     if (elf_file == 0) {
         print("Out of memory\n");
         kernel_panic();
     }
-    uint32_t bytes_read = fat32_read_file("/elf", elf_file);
+    uint32_t bytes_read = ext3_read_file("/elf", elf_file);
     if (bytes_read != file_size) {
         print("Failed to read ELF file\n");
         kfree(elf_file);

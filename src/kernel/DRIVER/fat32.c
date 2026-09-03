@@ -1,4 +1,4 @@
-#include "fat.h"
+#include "fat32.h"
 
 FAT32_BPB_T bpb;
 static bool fat32_initialized = false;
@@ -375,7 +375,7 @@ uint32_t fat32_write_file(const char* path, const uint8_t* buffer, uint32_t size
         uint32_t chunk = (remaining < bytes_per_cluster) ? remaining : bytes_per_cluster;
         
         memset(cluster_buf, 0, bytes_per_cluster);
-        memcpy(cluster_buf, buffer + written, chunk);
+        memcpy((void*)cluster_buf, (void*)buffer + written, chunk);
         write_sectors(lba, bpb.sectors_per_cluster, cluster_buf);
         
         written += chunk;

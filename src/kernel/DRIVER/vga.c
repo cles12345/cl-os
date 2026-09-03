@@ -84,7 +84,7 @@ void printh(uint32_t num){
     }
     
     while (i > 0){
-        print(buffer[--i]);
+        printc(buffer[--i]);
     }
 }
 

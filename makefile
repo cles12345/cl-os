@@ -16,8 +16,6 @@ ASM_OBJS = $(patsubst $(KERNEL_DIR)/%.asm, $(BUILD_DIR)/%_asm.o, $(ASM_SRCS))
 S_OBJS = $(patsubst $(KERNEL_DIR)/%.s, $(BUILD_DIR)/%_s.o, $(S_SRCS))
 OBJS = $(C_OBJS) $(ASM_OBJS) $(S_OBJS)
 
-.PHONY: all run clean
-
 all: $(BUILD_DIR)/cl-os.img
  
 $(BUILD_DIR)/cl-os.img: $(BUILD_DIR)/kernel $(BUILD_DIR)/boot/elf
@@ -27,16 +25,15 @@ $(BUILD_DIR)/cl-os.img: $(BUILD_DIR)/kernel $(BUILD_DIR)/boot/elf
 	cp grub.cfg $(BUILD_DIR)/boot/grub
 	cp $(BUILD_DIR)/kernel $(BUILD_DIR)/boot
 	dd if=/dev/zero of=$@ bs=1M count=100
-	mkfs.fat -F32 $@
-	mmd -i $@ ::/boot
-	mmd -i $@ ::/boot/grub
-	mcopy -i $@ $(BUILD_DIR)/boot/grub/grub.cfg ::/boot/grub/
-	mcopy -i $@ $(BUILD_DIR)/kernel ::/boot/
-	mcopy -i $@ $(BUILD_DIR)/boot/elf ::/
-
+	mkfs.ext3 -F -O ^extents,^flex_bg,^64bit,^metadata_csum,^mmp,^dir_nlink,^extra_isize,^huge_file,^uninit_bg -I 128 -b 1024 $@
 	sudo losetup -f $@
 	LOOP=$$(sudo losetup -l | grep $@ | tail -1 | awk '{print $$1}'); \
 	sudo mount $$LOOP /mnt; \
+	sudo mkdir -p /mnt/boot; \
+	sudo mkdir -p /mnt/boot/grub; \
+	sudo cp $(BUILD_DIR)/boot/grub/grub.cfg /mnt/boot/grub/; \
+	sudo cp $(BUILD_DIR)/kernel /mnt/boot/; \
+	sudo cp $(BUILD_DIR)/boot/elf /mnt/; \
 	sudo grub-install --target=i386-pc --boot-directory=/mnt/boot --force $$LOOP; \
 	sudo umount /mnt; \
 	sudo losetup -d $$LOOP
