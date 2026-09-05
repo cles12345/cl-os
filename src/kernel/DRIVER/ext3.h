@@ -3,6 +3,7 @@
 #include "disk.h"
 #include "vga.h"
 #include "stdint.h"
+#include "MM/heap.h"
 
 typedef struct {
     uint32_t inodes_count;

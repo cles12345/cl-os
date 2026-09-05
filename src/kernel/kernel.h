@@ -6,6 +6,7 @@
 #include "DRIVER/disk.h"
 #include"DRIVER/fat32.h"
 #include"DRIVER/ext3.h"
+#include "FS/vfs.h"
 #include "multiboot.h"
 #include "MM/memory.h"
 #include "MM/heap.h"

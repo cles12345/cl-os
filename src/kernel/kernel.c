@@ -34,25 +34,33 @@ void kmain(uint32_t magic, multiboot_info_t* boot_info){
     init_memory(mem_high, physical_alloc_start);
     kmalloc_init();
     init_ext3();
+    init_fat32();
+    init_vfs();
     
-    if (!ext3_file_exists("/elf")) {
+    int fd = vfs_open("/elf", O_RDONLY);
+    if (!fd) {
         print("ELF file not found\n");
         kernel_panic();
     }
-    uint32_t file_size = ext3_file_size("/elf");
+    uint32_t file_size = vfs_size(fd);
 
     uint8_t *elf_file = kmalloc(file_size);
     if (elf_file == 0) {
         print("Out of memory\n");
         kernel_panic();
     }
-    uint32_t bytes_read = ext3_read_file("/elf", elf_file);
+    uint32_t bytes_read = vfs_read(fd, elf_file, file_size);
     if (bytes_read != file_size) {
         print("Failed to read ELF file\n");
         kfree(elf_file);
         kernel_panic();
     }
 
+    vfs_close(fd);
+
+    printi(fd);
+    printc('\n');
+    
     uint32_t* new_pd = vmm_new_page_dir();
     uint32_t entry_point;
 

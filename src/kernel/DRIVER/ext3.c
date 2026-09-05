@@ -8,7 +8,6 @@ static uint32_t inodes_per_group = 0;
 static uint32_t blocks_per_group = 0;
 static uint32_t group_count = 0;
 static uint32_t first_data_block = 0;
-static uint32_t last_allocated_inode = 2;
 static uint32_t last_allocated_block = 0;
 static uint32_t partition_offset = 0;
 
@@ -40,7 +39,6 @@ static uint32_t inode_offset(uint32_t inode)
 {
     if (inodes_per_group == 0 || block_size == 0) return 0;
     
-    uint32_t group = (inode - 1) / inodes_per_group;
     uint32_t index = (inode - 1) % inodes_per_group;
     return (index * inode_size) % block_size;
 }
@@ -391,7 +389,7 @@ static bool create_dir_entry(uint32_t parent_inode, const char* name, uint32_t i
     new_entry->rec_len = rec_len;
     new_entry->name_len = name_len;
     new_entry->file_type = type;
-    memcpy(new_entry->name, name, name_len);
+    memcpy(new_entry->name, (void*)name, name_len);
     
     parent.size += rec_len;
     
@@ -524,7 +522,7 @@ uint32_t ext3_write_file(const char* path, const uint8_t* buffer, uint32_t size)
         uint8_t* buf = kmalloc(block_size);
         if (!buf) break;
         memset(buf, 0, block_size);
-        memcpy(buf, buffer + total_written, chunk);
+        memcpy(buf, (void*)(buffer + total_written), chunk);
         write_block(block, buf);
         kfree(buf);
         
@@ -565,14 +563,14 @@ bool ext3_create_symlink(const char* target, const char* path)
     inode.mtime = 0;
     
     if (inode.size < 60) {
-        memcpy((uint8_t*)&inode.block[0], target, inode.size);
+        memcpy((uint8_t*)&inode.block[0], (void*)target, inode.size);
     } else {
         uint32_t block = find_free_block();
         if (!block) return false;
         uint8_t* buf = kmalloc(block_size);
         if (!buf) return false;
         memset(buf, 0, block_size);
-        memcpy(buf, target, inode.size);
+        memcpy(buf, (void*)target, inode.size);
         write_block(block, buf);
         kfree(buf);
         inode.block[0] = block;
