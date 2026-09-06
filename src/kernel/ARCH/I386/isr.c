@@ -1,6 +1,7 @@
 #include "utill.h"
 #include "syscall.h"
 #include "DRIVER/keyboard.h"
+#include "PROC/process.h"
 
 const char* exception_names[32] = {
     "Divide Error",               
@@ -29,7 +30,7 @@ const char* exception_names[32] = {
     ""
 };
 
-void isr_handler(intrupt_registers_t* regs){
+intrupt_registers_t* isr_handler(intrupt_registers_t* regs){
     if (regs->intrupt_number < 32){
         print("Exception: ");
         print(exception_names[regs->intrupt_number]);
@@ -44,4 +45,9 @@ void isr_handler(intrupt_registers_t* regs){
     else if(regs->intrupt_number == 33){
         keyboard_handler();
     }
+    else if(regs->intrupt_number == 32){
+        return schedule(regs);
+    }
+
+    return regs;
 }

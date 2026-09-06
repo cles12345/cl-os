@@ -60,3 +60,4 @@ uint32_t vfs_size(int fd);
 bool vfs_eof(int fd);
 
 extern fd_table_t* vfs_fd_table;
+extern fd_table_t* kernel_fd_table;

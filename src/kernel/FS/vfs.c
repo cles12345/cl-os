@@ -2,6 +2,7 @@
 
 static vfs_ops_t* vfs_current_fs = NULL;
 fd_table_t* vfs_fd_table = NULL;
+fd_table_t* kernel_fd_table = NULL;
 
 static vfs_ops_t vfs_fat32_ops = {
     .exists = fat32_file_exists,
@@ -29,6 +30,15 @@ static vfs_ops_t vfs_ext3_ops = {
     .is_symlink = ext3_is_symlink,
 };
 
+static vfs_file_t std_out_file = {
+    .path = "/dev/stdout",
+    .position = 0,
+    .size = 0,
+    .flags = O_WRONLY,
+    .ref_count = 1,
+    .private = NULL
+};
+
 static void vfs_detect_fs(void)
 {
     uint8_t* buf = kmalloc(1024);
@@ -54,7 +64,8 @@ static void vfs_detect_fs(void)
 void init_vfs(void)
 {
     vfs_detect_fs();
-    vfs_fd_table = vfs_fd_table_create();
+    kernel_fd_table = vfs_fd_table_create();
+    vfs_fd_table = kernel_fd_table;
 }
 
 fd_table_t* vfs_fd_table_create(void)
@@ -85,6 +96,12 @@ void vfs_fd_table_destroy(fd_table_t* table)
 static int vfs_fd_alloc(fd_table_t* table, vfs_file_t* file)
 {
     if (!table || !file) return -1;
+    
+    if (vfs_fd_table->files[FD_STDOUT] == NULL) {
+        vfs_fd_table->files[FD_STDOUT] = &std_out_file;
+        std_out_file.ref_count++;
+        vfs_fd_table->count++;
+    }
     
     for (int i = 3; i < FD_MAX; i++) {
         if (table->files[i] == NULL) {
@@ -217,6 +234,15 @@ uint32_t vfs_write(int fd, const uint8_t* buffer, uint32_t size)
 {
     if (!vfs_fd_table || !buffer) return 0;
     
+    if (fd == FD_STDOUT) {
+        uint32_t written = 0;
+        for (uint32_t i = 0; i < size; i++) {
+            printc((char)buffer[i]);
+            written++;
+        }
+        return written;
+    }
+
     vfs_file_t* file = vfs_fd_get(vfs_fd_table, fd);
     if (!file) return 0;
     

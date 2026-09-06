@@ -18,7 +18,7 @@ OBJS = $(C_OBJS) $(ASM_OBJS) $(S_OBJS)
 
 all: $(BUILD_DIR)/cl-os.img
  
-$(BUILD_DIR)/cl-os.img: $(BUILD_DIR)/kernel $(BUILD_DIR)/boot/elf
+$(BUILD_DIR)/cl-os.img: $(BUILD_DIR)/kernel $(BUILD_DIR)/boot/elf $(BUILD_DIR)/boot/elf2
 	rm -f $(BUILD_DIR)/cl-os.img 2>/dev/null || true
 	@mkdir -p $(BUILD_DIR)/boot
 	@mkdir -p $(BUILD_DIR)/boot/grub
@@ -34,6 +34,7 @@ $(BUILD_DIR)/cl-os.img: $(BUILD_DIR)/kernel $(BUILD_DIR)/boot/elf
 	sudo cp $(BUILD_DIR)/boot/grub/grub.cfg /mnt/boot/grub/; \
 	sudo cp $(BUILD_DIR)/kernel /mnt/boot/; \
 	sudo cp $(BUILD_DIR)/boot/elf /mnt/; \
+	sudo cp $(BUILD_DIR)/boot/elf2 /mnt/; \
 	sudo grub-install --target=i386-pc --boot-directory=/mnt/boot --force $$LOOP; \
 	sudo umount /mnt; \
 	sudo losetup -d $$LOOP
@@ -59,6 +60,12 @@ $(BUILD_DIR)/boot/elf: elf.s
 	$(ASM) -f elf32 $< -o elf.o
 	$(LD) -m elf_i386 -o $@ elf.o
 	rm -rf elf.o
+
+$(BUILD_DIR)/boot/elf2: elf2.s
+	@mkdir -p $(BUILD_DIR)/boot
+	$(ASM) -f elf32 $< -o elf2.o
+	$(LD) -m elf_i386 -o $@ elf2.o
+	rm -rf elf2.o
 
 run: $(BUILD_DIR)/cl-os.img
 	qemu-system-i386 -hda $<

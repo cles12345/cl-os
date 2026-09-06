@@ -1,6 +1,5 @@
 #include "kernel.h"
 
-extern void jump_to_user_mode(uint32_t, uint32_t);
 extern uint32_t kernel_start;
 extern uint32_t kernel_end;
 
@@ -36,43 +35,14 @@ void kmain(uint32_t magic, multiboot_info_t* boot_info){
     init_ext3();
     init_fat32();
     init_vfs();
-    
-    int fd = vfs_open("/elf", O_RDONLY);
-    if (!fd) {
-        print("ELF file not found\n");
-        kernel_panic();
-    }
-    uint32_t file_size = vfs_size(fd);
+    init_process();
 
-    uint8_t *elf_file = kmalloc(file_size);
-    if (elf_file == 0) {
-        print("Out of memory\n");
-        kernel_panic();
-    }
-    uint32_t bytes_read = vfs_read(fd, elf_file, file_size);
-    if (bytes_read != file_size) {
-        print("Failed to read ELF file\n");
-        kfree(elf_file);
-        kernel_panic();
-    }
+    process_t* process = create_process("/elf");
 
-    vfs_close(fd);
+    if (!process) kernel_panic();
 
-    printi(fd);
-    printc('\n');
-    
-    uint32_t* new_pd = vmm_new_page_dir();
-    uint32_t entry_point;
+    process_t* process2 = create_process("/elf2");
 
-    if (elf_load(elf_file, &entry_point, new_pd) == 0){
-        kfree(elf_file);
-        mem_change_page_dir(new_pd);
-        jump_to_user_mode(entry_point, STACK_ELF_START);
-    }
-    else{
-        print("couldnt start the ELF\n");
-        kfree(elf_file);
-        kernel_panic();
-    }
+    if (!process2) kernel_panic();
     while (1) asm volatile("hlt");
 }

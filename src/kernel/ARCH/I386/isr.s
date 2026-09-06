@@ -54,6 +54,7 @@ ISR_NOERRORCODE 29
 ISR_ERRORCODE    30
 ISR_NOERRORCODE 31
 
+ISR_NOERRORCODE 32
 ISR_NOERRORCODE 33
 
 ISR_NOERRORCODE 128
@@ -75,6 +76,7 @@ isr_common_stub:
     push esp
     call isr_handler
     add esp, 4
+    mov esp, eax 
 
     pop eax
     pop eax

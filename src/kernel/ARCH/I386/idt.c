@@ -38,6 +38,7 @@ extern void isr29(void);
 extern void isr30(void);
 extern void isr31(void);
 
+extern void isr32(void);
 extern void isr33(void);
 
 extern void isr128(void);
@@ -96,6 +97,7 @@ void init_idt(void){
     set_id_gate(30, (uint32_t)isr30, 0x08, 0x8E);
     set_id_gate(31, (uint32_t)isr31, 0x08, 0x8E);
 
+    set_id_gate(32, (uint32_t)isr32, 0x08, 0x8E);
     set_id_gate(33, (uint32_t)isr33, 0x08, 0x8E);
     
     set_id_gate(0x80, (uint32_t)isr128, 0x08, 0x8E);
@@ -103,6 +105,7 @@ void init_idt(void){
     idt_flush((uint32_t)&idtr);
 
     outb(0x21, inb(0x21) & ~0x02);
+    outb(0x21, inb(0x21) & ~0x03);
     asm volatile("sti");
 }
 
